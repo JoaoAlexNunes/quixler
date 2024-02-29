@@ -20,6 +20,4 @@ pub fn main() !void {
     const user_input = try ask_user(&buf);
 
     _ = try lexer.lextest(user_input);
-
-    //std.debug.print("This is your input: {s}\n", .{user_input});
 }
