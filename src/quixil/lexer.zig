@@ -1,6 +1,10 @@
 const std = @import("std");
 const ArrayList = std.ArrayList;
 
+var buffer: [1000]u8 = undefined;
+var fba = std.heap.FixedBufferAllocator.init(&buffer);
+const allocator = fba.allocator();
+
 pub const TokenKind = enum {
     Atomic,
     Sub,
@@ -15,43 +19,56 @@ pub const Token = struct {
     value: []u8,
 };
 
-pub fn lex(source: *[]u8) !ArrayList(Token) {
-    const tokens = ArrayList(Token);
+pub fn lex(source: []u8) !ArrayList(Token) {
+    var tokens = ArrayList(Token).init(allocator);
 
-    var i: usize = 0;
-    while (i < source.len) : (i += 1) {
-        const current = source[i];
+    var start: usize = 0;
+    while (start < source.len) {
+        const current = source[start];
+
         switch (current) {
             // Digits
             '0'...'9' => {
-                var j = i;
-                while (j < source.len and source[j] >= '0' and source[j] <= '9') : (j += 1) {}
-                tokens.append(Token{ .kind = TokenKind.Atomic, .value = source[i..j] });
-                i = j - 1; // Move the index to the end of the number
+                const i = start;
+                while (start < source.len and source[start] >= '0' and source[start] <= '9') : (start += 1) {}
+                try tokens.append(Token{ .kind = TokenKind.Atomic, .value = source[i..start] });
             },
 
             // Operators
-            '+' => tokens.append(Token{ .kind = TokenKind.Add, .value = "+" }),
-            '-' => tokens.append(Token{ .kind = TokenKind.Sub, .value = "-" }),
-            '*' => tokens.append(Token{ .kind = TokenKind.Mul, .value = "*" }),
-            '/' => tokens.append(Token{ .kind = TokenKind.Div, .value = "/" }),
+            '+' => {
+                try tokens.append(Token{ .kind = TokenKind.Add, .value = source[start .. start + 1] });
+                start += 1;
+            },
+            '-' => {
+                try tokens.append(Token{ .kind = TokenKind.Sub, .value = source[start .. start + 1] });
+                start += 1;
+            },
+            '*' => {
+                try tokens.append(Token{ .kind = TokenKind.Mul, .value = source[start .. start + 1] });
+                start += 1;
+            },
+            '/' => {
+                try tokens.append(Token{ .kind = TokenKind.Div, .value = source[start .. start + 1] });
+                start += 1;
+            },
 
             // Whitespace
-            ' ' => continue,
+            ' ' => start += 1,
 
             // End of File
-            else => return tokens.append(Token{ .kind = TokenKind.EOF, .value = &[]u8{0} }), // Return EOF
+            else => {
+                return error.InvalidChar;
+            },
         }
     }
 
-    tokens.append(Token{ .kind = TokenKind.EOF, .value = &[]u8{0} });
+    try tokens.append(Token{ .kind = TokenKind.EOF, .value = source[0..1] });
     return tokens;
 }
 
-pub fn lextest(input: *[]u8) !void {
+pub fn lextest(input: []u8) !void {
     const tokens = try lex(input);
 
     // Print out the tokens
-
-    std.debug.print("{any}:\n", tokens.items);
+    std.debug.print("{any}\n", .{tokens.items});
 }
