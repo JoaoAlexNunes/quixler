@@ -1,4 +1,5 @@
 const std = @import("std");
+const lexer = @import("quixil/lexer.zig");
 
 fn ask_user(buf: []u8) ![]u8 {
     const stdin = std.io.getStdIn().reader();
@@ -16,7 +17,9 @@ fn ask_user(buf: []u8) ![]u8 {
 pub fn main() !void {
     var buf: [1024]u8 = undefined;
 
-    const user_input = try ask_user(&buf);
+    var user_input = try ask_user(&buf);
 
-    std.debug.print("This is your input: {s}\n", .{user_input});
+    _ = try lexer.lextest(&user_input);
+
+    //std.debug.print("This is your input: {s}\n", .{user_input});
 }
