@@ -2,7 +2,7 @@
 
 This project is a simple lexer implemented in Zig, based on the concepts of lexing input expressions using the Pratt parsing technique. It is designed to be used as part of Essentials of Compilation, providing a foundational component for analyzing source code.
 
-<span style="font-weight: bold; font-size: 16px;"> Based on the project [Prattcal](https://github.com/JoaoAlexNunes/prattcalc/)</span>
+<span style="font-weight: bold; font-size: 16px;"> Based on the project [Prattcalc](https://github.com/JoaoAlexNunes/prattcalc/)</span>
 
 ## Getting Started
 
