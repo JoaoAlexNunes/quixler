@@ -1,5 +1,5 @@
 const std = @import("std");
-const lexer = @import("quixil/lexer.zig");
+const lexer = @import("quixinc/lexer.zig");
 
 fn ask_user(buf: []u8) ![]u8 {
     const stdin = std.io.getStdIn().reader();
