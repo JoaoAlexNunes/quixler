@@ -26,6 +26,7 @@ pub const BinaryExpr = struct {
     rl: *const Expr, // right leaf
 };
 
+//Tree
 pub const Expr = union(ExprTy) {
     atomic: f64,
     unary: UnaryExpr,
@@ -34,14 +35,14 @@ pub const Expr = union(ExprTy) {
 
 pub fn eval(expr: *const Expr) f64 {
     return switch (expr.*) {
-        ExprTy.atomic => |v| @as(f64, v),
-        ExprTy.unary => |u| {
+        Expr.atomic => |v| @as(f64, v),
+        Expr.unary => |u| {
             const leaf = eval(u.leaf);
             return switch (u.op) {
                 UnOp.neg => -leaf,
             };
         },
-        ExprTy.binary => |b| {
+        Expr.binary => |b| {
             const ll = eval(b.ll);
             const rl = eval(b.rl);
             return switch (b.op) {

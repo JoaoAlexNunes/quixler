@@ -65,10 +65,3 @@ pub fn lex(source: []u8) !ArrayList(Token) {
     try tokens.append(Token{ .kind = TokenKind.EOF, .value = source[0..1] });
     return tokens;
 }
-
-pub fn lextest(input: []u8) !void {
-    const tokens = try lex(input);
-
-    // Print out the tokens
-    std.debug.print("{any}\n", .{tokens.items});
-}
