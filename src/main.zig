@@ -1,23 +1,5 @@
-const std = @import("std");
-const lexer = @import("quixinc/lexer.zig");
-
-fn ask_user(buf: []u8) ![]u8 {
-    const stdin = std.io.getStdIn().reader();
-    const stdout = std.io.getStdOut().writer();
-
-    _ = try stdout.print("\nProvide your input: ", .{});
-
-    const input = (try stdin.readUntilDelimiterOrEof(buf, '\n')) orelse {
-        return error.Null;
-    };
-
-    return input;
-}
+const quixinc = @import("quixinc/quixinc.zig");
 
 pub fn main() !void {
-    var buf: [1024]u8 = undefined;
-
-    const user_input = try ask_user(&buf);
-
-    std.debug.print("{s}\n", .{user_input});
+    try quixinc.main();
 }
