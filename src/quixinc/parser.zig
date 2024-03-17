@@ -4,6 +4,8 @@ const lex = @import("lexer.zig");
 const ArrayList = std.ArrayList;
 
 const Expr = ast.Expr;
+const OperatorKind = ast.OperatorKind;
+
 const Token = lex.Token;
 const TokenKind = lex.TokenKind;
 
@@ -36,34 +38,14 @@ fn parse_primary(token: Token) Expr {
     }
 }
 
-// fn parse_primary(tokens: &[Token], cursor: &mut usize) -> Expr {
-//     let current_token = &tokens[*cursor];
-//     *cursor += 1;
-
-//     match current_token.kind {
-//         TokenKind::Number => Expr::Number(current_token.value.parse().unwrap()),
-//         _ => panic!(
-//             "Primary Expression Expected but found {:?}",
-//             current_token.kind
-//         ),
-//     }
-// }
-
-// fn parse_operator(tokens: &[Token], cursor: &mut usize) -> OperatorKind {
-//     let current_token = &tokens[*cursor];
-//     *cursor += 1;
-
-//     match current_token.kind {
-//         TokenKind::Addition => OperatorKind::Add,
-//         TokenKind::Subtraction => OperatorKind::Sub,
-//         TokenKind::Multiplication => OperatorKind::Mul,
-//         TokenKind::Div => OperatorKind::Div,
-//         _ => panic!(
-//             "Operator Expression Expected but found {:?}",
-//             current_token.kind
-//         ),
-//     }
-// }
+fn parse_operator(token: Token) OperatorKind {
+    switch (token.kind) {
+        TokenKind.Add => OperatorKind.Add,
+        TokenKind.Sub => OperatorKind.Sub,
+        TokenKind.Mul => OperatorKind.Mul,
+        TokenKind.Div => OperatorKind.Div,
+    }
+}
 
 // // recursive descent parser
 // pub fn parse(tokens: &[Token], cursor: &mut usize, min_bp: u8) -> Expr {
