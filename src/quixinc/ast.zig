@@ -1,8 +1,4 @@
-pub const UnOp = enum {
-    neg,
-};
-
-pub const BinOp = enum {
+pub const OperatorKind = enum {
     add,
     sub,
     mul,
@@ -15,13 +11,8 @@ const ExprTy = enum {
     binary,
 };
 
-pub const UnaryExpr = struct {
-    op: UnOp,
-    leaf: *const Expr,
-};
-
 pub const BinaryExpr = struct {
-    op: BinOp,
+    op: OperatorKind,
     ll: *const Expr, // left  leaf
     rl: *const Expr, // right leaf
 };
@@ -29,7 +20,7 @@ pub const BinaryExpr = struct {
 //Tree
 pub const Expr = union(ExprTy) {
     atomic: f64,
-    unary: UnaryExpr,
+    unary: BinaryExpr,
     binary: BinaryExpr,
 };
 
@@ -39,17 +30,17 @@ pub fn eval(expr: *const Expr) f64 {
         Expr.unary => |u| {
             const leaf = eval(u.leaf);
             return switch (u.op) {
-                UnOp.neg => -leaf,
+                OperatorKind.sub => -leaf,
             };
         },
         Expr.binary => |b| {
             const ll = eval(b.ll);
             const rl = eval(b.rl);
             return switch (b.op) {
-                BinOp.add => ll + rl,
-                BinOp.sub => ll - rl,
-                BinOp.mul => ll * rl,
-                BinOp.div => ll / rl,
+                OperatorKind.add => ll + rl,
+                OperatorKind.sub => ll - rl,
+                OperatorKind.mul => ll * rl,
+                OperatorKind.div => ll / rl,
             };
         },
     };
