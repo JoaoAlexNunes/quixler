@@ -9,84 +9,110 @@ const OperatorKind = ast.OperatorKind;
 const Token = lex.Token;
 const TokenKind = lex.TokenKind;
 
-const Bptype = union { int: i8, void: void };
+const Bpvalue = struct { lvalue: u8, rvalue: u8 };
+const heap_alloc = std.heap.page_allocator;
 
-const Bpvalue = struct { lvalue: Bptype, rvalue: Bptype };
+const Error = error{ OutOfMemory, InvalidChar };
 
-fn prefix_bp(kind: TokenKind) Bpvalue {
-    switch (kind) {
-        TokenKind.Sub => {
-            Bpvalue{ .lvalue = void, .rvalue = 5 };
-        },
-    }
+fn prefix_bp(kind: TokenKind) u8 {
+    return switch (kind) {
+        TokenKind.Sub => 5,
+        else => unreachable,
+    };
 }
 
 fn infix_bp(kind: TokenKind) Bpvalue {
-    switch (kind) {
-        TokenKind.Add | TokenKind.Sub => {
-            Bpvalue{ .lvalue = 1, .rvalue = 2 };
+    return switch (kind) {
+        TokenKind.Add, TokenKind.Sub => Bpvalue{ .lvalue = 1, .rvalue = 2 },
+        TokenKind.Mul, TokenKind.Div => Bpvalue{ .lvalue = 3, .rvalue = 4 },
+        else => unreachable,
+    };
+}
+
+fn parse_operator(tokens: []Token, cursor: *usize) OperatorKind {
+    const token = tokens[cursor.*];
+    defer cursor.* += 1;
+    return switch (token.kind) {
+        TokenKind.Add => OperatorKind.add,
+        TokenKind.Sub => OperatorKind.sub,
+        TokenKind.Mul => OperatorKind.mul,
+        TokenKind.Div => OperatorKind.div,
+        else => unreachable,
+    };
+}
+
+fn parse_primary(tokens: []Token, cursor: *usize) Error!Expr {
+    const token = tokens[cursor.*];
+    return try switch (token.kind) {
+        TokenKind.Atomic => {
+            cursor.* += 1;
+            const temp = std.fmt.parseFloat(f64, token.value) catch {
+                return Error.InvalidChar;
+            };
+            return Expr{ .atomic = temp };
         },
-        TokenKind.Mul | TokenKind.Div => {
-            Bpvalue{ .lvalue = 3, .rvalue = 4 };
+        else => unreachable,
+    };
+}
+
+fn parse_expr_helper(tokens: []Token, cursor: *usize) Error!Expr {
+    return switch (tokens[cursor.*].kind) {
+        TokenKind.Atomic => parse_primary(tokens, cursor),
+        TokenKind.Sub => {
+            const p_bp = prefix_bp(TokenKind.Sub);
+            const kind = parse_operator(tokens, cursor);
+            const ptr = heap_alloc.create(Expr) catch {
+                return Error.OutOfMemory;
+            };
+            ptr.* = try parse_helper(tokens, cursor, p_bp);
+
+            const temp = ast.UnaryExpr{ .op = kind, .expr = ptr };
+            return Expr{ .unary = temp };
         },
-    }
+        else => unreachable,
+    };
 }
 
-fn parse_primary(token: Token) Expr {
-    switch (token.kind) {
-        TokenKind.Atomic => Expr.Atomic,
+fn parse_helper(tokens: []Token, cursor: *usize, min_bp: u8) Error!Expr {
+    // 3 + 4
+    // ^
+    var left = try parse_expr_helper(tokens, cursor);
+
+    while (true) {
+        const op = tokens[cursor.*];
+
+        if (op.kind == TokenKind.EOF) {
+            break;
+        }
+
+        const i_bp = infix_bp(op.kind);
+        const l_bp = i_bp.lvalue;
+        const r_bp = i_bp.rvalue;
+        if (min_bp > l_bp) {
+            break;
+        }
+
+        const kind = parse_operator(tokens, cursor);
+
+        const right = try parse_helper(tokens, cursor, r_bp);
+
+        const lhs_ptr = try heap_alloc.create(Expr); // heap_alloc.alloc(type, number of elements)
+        const rhs_ptr = try heap_alloc.create(Expr);
+
+        lhs_ptr.* = left;
+        rhs_ptr.* = right;
+
+        const temp = ast.BinaryExpr{
+            .op = kind,
+            .ll = lhs_ptr,
+            .rl = rhs_ptr,
+        };
+        left = Expr{ .binary = temp };
     }
+    return left;
 }
 
-fn parse_operator(token: Token) OperatorKind {
-    switch (token.kind) {
-        TokenKind.Add => OperatorKind.Add,
-        TokenKind.Sub => OperatorKind.Sub,
-        TokenKind.Mul => OperatorKind.Mul,
-        TokenKind.Div => OperatorKind.Div,
-    }
+pub fn parse(tokens: []Token) !Expr {
+    var cursor: usize = 0;
+    return try parse_helper(tokens, &cursor, 0);
 }
-
-// // recursive descent parser
-// pub fn parse(tokens: &[Token], cursor: &mut usize, min_bp: u8) -> Expr {
-//     let mut left = match tokens[*cursor].kind {
-//         TokenKind::Number => parse_primary(tokens, cursor),
-//         TokenKind::Subtraction => {
-//             let ((), r_bp) = prefix_bp(&TokenKind::Subtraction);
-//             let kind = parse_operator(tokens, cursor);
-//             let right = parse(&tokens, cursor, r_bp);
-
-//             Expr::Unary {
-//                 kind,
-//                 operand: Box::new(right),
-//             }
-//         }
-//         _ => panic!("Unexpected token {:?}", tokens[*cursor].kind),
-//     };
-
-//     loop {
-//         // iterate over all the tokens...
-//         let op = &tokens[*cursor];
-
-//         if op.kind == TokenKind::EOF {
-//             break;
-//         }
-
-//         let (l_bp, r_bp) = infix_bp(&op.kind);
-//         if min_bp > l_bp {
-//             break;
-//         }
-
-//         let kind = parse_operator(tokens, cursor);
-
-//         let right = parse(&tokens, cursor, r_bp);
-
-//         left = Expr::Binary {
-//             kind,
-//             left: Box::new(left),
-//             right: Box::new(right),
-//         }
-//     }
-
-//     left
-// }

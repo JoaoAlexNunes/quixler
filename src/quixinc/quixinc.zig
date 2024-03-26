@@ -1,5 +1,7 @@
 const std = @import("std");
 const lexer = @import("lexer.zig");
+const parser = @import("parser.zig");
+const ast = @import("ast.zig");
 
 fn ask_user(buf: []u8) ![]u8 {
     const stdin = std.io.getStdIn().reader();
@@ -19,7 +21,16 @@ pub fn main() !void {
 
     const user_input = try ask_user(&buf);
 
-    const tokens = try lexer.lex(user_input);
+    var tokens = try lexer.lex(user_input);
 
-    std.debug.print("{any}\n", .{tokens.items});
+    const parsed_ast = try parser.parse(try tokens.toOwnedSlice());
+
+    std.debug.print("Ast:{any}\n", .{parsed_ast});
+
+    // (((2*5)-(3/3))+9)
+
+    const ast_evaled = ast.eval(&parsed_ast);
+
+    std.debug.print("Result is: {d:.2}\n", .{ast_evaled});
 }
+//print("x = {d:6.5}\n", .{ x });
