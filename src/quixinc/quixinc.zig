@@ -27,10 +27,7 @@ pub fn main() !void {
 
     std.debug.print("Ast:{any}\n", .{parsed_ast});
 
-    // (((2*5)-(3/3))+9)
-
     const ast_evaled = ast.eval(&parsed_ast);
 
     std.debug.print("Result is: {d:.2}\n", .{ast_evaled});
 }
-//print("x = {d:6.5}\n", .{ x });
