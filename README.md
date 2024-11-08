@@ -9,7 +9,7 @@ This project is a simple lexer implemented in Zig, based on the concepts of lexi
 To use the Zig lexer, ensure you have Zig installed on your system. Clone the repository and navigate to the project directory. Then, you can build and run the lexer using the Zig compiler.
 
 ```bash
-git clone https://github.com/yourusername/quixler
+git clone https://github.com/JoaoAlexNunes/quixler
 cd quixler
 zig run build
 ```
